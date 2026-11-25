@@ -9,7 +9,7 @@
 // The program below only guards the bounty rules and writes the line
 // to /output/entry.txt (or $OUTPUT_DIR/entry.txt when run locally),
 // with no trailing newline at the end of the file.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const TEXT =
   "Final text: I spent all day at 2% watching you charge everything except me — your watch, your earbuds, your vape. I hope that cable fits loose forever.";
@@ -83,7 +83,13 @@ function main(): void {
   const outDir = process.env.OUTPUT_DIR ?? "/output";
   mkdirSync(outDir, { recursive: true });
   // A plain string write adds no trailing newline.
-  writeFileSync(`${outDir}/entry.txt`, TEXT, "utf8");
+  const outPath = `${outDir}/entry.txt`;
+  writeFileSync(outPath, TEXT, "utf8");
+  // Read the file back: a partial write or an encoding slip must fail
+  // loudly here instead of shipping a corrupted entry.
+  if (readFileSync(outPath, "utf8") !== TEXT) {
+    throw new Error("entry.txt does not match the validated entry text");
+  }
 }
 
 main();
